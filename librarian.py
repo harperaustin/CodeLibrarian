@@ -36,7 +36,7 @@ def compare_two_books(book1desc, book2desc):
                              count += 1
                         total += val
 
-    return count / ((len(book1) + len(book2))/2)
+    return (count / ((len(book1) + len(book2))/2))
 
 
     
@@ -55,6 +55,8 @@ def find_most_similar_book(book_title):
     if not have_book:
          print("Book not found, but you can provide 3 keywords and we'll find a similar book!")
          book_descr += str(input("First Keyword: ") + ", ")
+         book_descr += str(input("Second Keyword: ") + ", ")
+         book_descr += str(input("Third Keyword: ") + ", ")
          print(book_descr)
         # here i can add it to where you add in your own descriptions.
     #Need to make sure the book doesn't just find itself in case of repeats
@@ -68,6 +70,6 @@ def find_most_similar_book(book_title):
                    most_sim_val = curr_val
                    most_sim_index = index
 
-    return "The most similar book is " + books["bibliography.title"][most_sim_index]+ " by "+ books["bibliography.author.name"][most_sim_index] + " with a similarity score of " + str(most_sim_index)
+    return "The most similar book is " + books["bibliography.title"][most_sim_index]+ " by "+ books["bibliography.author.name"][most_sim_index] + " with a similarity score of " + str(most_sim_val)
 
 print(find_most_similar_book("Crime and Punishmen"))
