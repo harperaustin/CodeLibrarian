@@ -4,9 +4,11 @@ import requests
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.action_chains import ActionChains
 import time
 import openai
 from openai import OpenAI
+import random
 
 nlp = spacy.load("en_core_web_md")
 books = pd.read_csv('classics.csv')
@@ -80,10 +82,14 @@ def find_most_similar_book(book_title):
               if curr_val > most_sim_val:
                    most_sim_val = curr_val
                    most_sim_index = index
+     
+    if most_sim_val == 0:
+         print("The descriptions of the book had absolutely 0 similarities with the content of other books in the dataset. Make sure your spelling is correct.")
+         return None
     
     average = total / 1005
-
-    return "The most similar book from the classics dataset is " + books["bibliography.title"][most_sim_index]+ " by "+ books["bibliography.author.name"][most_sim_index] + " with a similarity score of " + str(most_sim_val) + ". The average similarity score was " + str(average)
+    print("The most similar book from the classics dataset is " + books["bibliography.title"][most_sim_index]+ " by "+ books["bibliography.author.name"][most_sim_index] + " with a similarity score of " + str(most_sim_val) + ". The average similarity score was " + str(average))
+    return books["bibliography.title"][most_sim_index]+ " by "+ books["bibliography.author.name"][most_sim_index]
 
 #print(find_most_similar_book("The Call of the Wild"))
 
@@ -109,42 +115,51 @@ def get_book_url(book_title):
 
 
 def get_also_enjoyed_book(book_url):
-
+     if type(book_url) != str:
+          print("Invalid URL due to spelling, no book can be found.")
+          return None
      options = webdriver.ChromeOptions()
      options.headless = True
      driver = webdriver.Chrome(options=options)
      driver.get(book_url)
-     time.sleep(5)
-     page_source = driver.page_source
-     driver.quit()
+     time.sleep(4)
+     
 
-     
-     
-     page_content = BeautifulSoup(page_source, 'html.parser')
-     other_readers_section = page_content.find('div', class_='BookPage__relatedTopContent')
+
+     other_readers_section = driver.find_element(By.CLASS_NAME, 'BookPage__relatedTopContent')
+     other_readers_section_scroll = driver.find_element(By.CLASS_NAME, 'BookPage__relatedTopContent')
+
 
      if not other_readers_section:
           print("The other readers enjoyed section was NOT found.")
           return None
      else:
           print("Other readers enjoyed section found.")
+          driver.execute_script("arguments[0].scrollIntoView(true);", other_readers_section_scroll)
+          time.sleep(4)
      
-     first_rec = other_readers_section.find('div', class_="BookCard")
+     first_rec = other_readers_section.find_element(By.CLASS_NAME, "BookCard")
+     #first_rec = other_readers_section.find('div', class_="BookCard")
      if not first_rec:
           print("No Recs found")
           return None
      else:
           print("Found some recs")
+          
 
-     first_rec_title = first_rec.find('div', class_="BookCard__title")
-     first_rec_author = first_rec.find('div', class_="BookCard__authorName")
+     first_rec_title = first_rec.find_element(By.CLASS_NAME,"BookCard__title")
+     first_rec_author = first_rec.find_element(By.CLASS_NAME,"BookCard__authorName")
    
 
      
      
-     rec_book_title = first_rec_title.get_text(strip=True)
-     rec_book_author = first_rec_author.get_text(strip=True)
+     rec_book_title = first_rec_title.text
+     rec_book_author = first_rec_author.text
      print(rec_book_title + " by " + rec_book_author)
+     driver.quit()
+     return rec_book_title + " by " + rec_book_author
+
+#print(get_also_enjoyed_book(get_book_url("Ego is the Enemy")))
 
 
 def get_stat_diff(book_title):
@@ -165,23 +180,37 @@ def get_stat_diff(book_title):
     smallest_diff = 100
     closest_index = 0
     if not have_book:
-          print("Book not in data base, so a book with similar stats can't be calculated")
+          print("Book not in dataset, so a book with similar stats can't be calculated. A random book will be generated instead: ")
           #DO A RANDOM BOOK INSTEAD!!!!
+          new_index = random.randint(0,1005)
+          print("The random book is " + books["bibliography.title"][new_index] +  " by " + books["bibliography.author.name"][new_index])
+          return books["bibliography.title"][new_index] +  " by " + books["bibliography.author.name"][new_index]
+
     else:
          for index in range(1006):
               curr_diff = (abs((books["metrics.difficulty.automated readability index"][index] - book_read)) + abs((books["metrics.difficulty.linsear write formula"][index] - book_lins)))
               if curr_diff < smallest_diff and curr_diff != 0:
                    closest_index = index
                    smallest_diff = curr_diff
-
-         print(books["bibliography.title"][closest_index] +  " by " + books["bibliography.author.name"][closest_index] + " with the smallest difference of " + str(smallest_diff))
+         print(books["bibliography.title"][closest_index] +  " by " + books["bibliography.author.name"][closest_index] + " with the smallest statistical difference of " + str(smallest_diff))
+         return books["bibliography.title"][closest_index] +  " by " + books["bibliography.author.name"][closest_index]
               
               
-#get_stat_diff("Crime and Punishment")
-#client = OpenAI()
 
-response = client.chat.completions.create(model="gpt-3.5-turbo-0125", messages=[{"role": "user", "content": "Tell me why Pride and Prejudice is a good book in 2 sentences."}] )
 
-print(response.choices[0].message.content)
 
-#get_also_enjoyed_book(get_book_url("The Call of the Wild"))
+def book_librarian(book_name):
+     book1 = find_most_similar_book(book_name)
+     book2 = get_also_enjoyed_book(get_book_url(book_name))
+     book3 = get_stat_diff(book_name)
+
+     if type(book1) != str or type(book2) != str:
+          return "There were errors with your book search. Make sure your spelling is correct and you are entering a valid book."
+
+     prompt = "You are knowledgable in books and literature. I really enjoyed the book " + book_name + " tell me, in 3 separate paragraphs for each book, why I would also like " + str(book1) + ", " + str(book2) + ", and " + str(book3)
+     response = client.chat.completions.create(model="gpt-3.5-turbo-0125", messages=[{"role": "user", "content": prompt}] )
+
+     return response.choices[0].message.content
+
+
+print("\n\n\n" + book_librarian("Just Kids") + "\n")
