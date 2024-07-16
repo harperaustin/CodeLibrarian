@@ -65,11 +65,12 @@ def find_most_similar_book(book_title):
             book_descr = books["bibliography.subjects"][index]
             break
     if not have_book:
-         print("Book not in stored dataset, but you can provide 3 keywords and we'll find a similar book!")
+         print("Book not in the stored dataset, but you can provide 5 keywords and we'll find a similar book!")
          book_descr += str(input("First Keyword: ") + ", ")
          book_descr += str(input("Second Keyword: ") + ", ")
-         book_descr += str(input("Third Keyword: "))
-         print(book_descr)
+         book_descr += str(input("Third Keyword: ") + ", ")
+         book_descr += str(input("Fourth Keyword: ") + ", ")
+         book_descr += str(input("Fifth Keyword: "))
          
     most_sim_val = 0
     most_sim_index = 0
@@ -168,7 +169,7 @@ def get_stat_diff(book_title):
     if not have_book:
           print("Book not in dataset, so a book with similar stats can't be calculated. A random book will be generated instead: ")
           new_index = random.randint(0,1005)
-          print("The random book is " + books["bibliography.title"][new_index] +  " by " + books["bibliography.author.name"][new_index] + "\n")
+          print("The random book is " + books["bibliography.title"][new_index] +  " by " + books["bibliography.author.name"][new_index] + "\n_________________________________________")
           return books["bibliography.title"][new_index] +  " by " + books["bibliography.author.name"][new_index]
 
     else:
@@ -177,7 +178,7 @@ def get_stat_diff(book_title):
               if curr_diff < smallest_diff and curr_diff != 0:
                    closest_index = index
                    smallest_diff = curr_diff
-         print("Based on the readability and difficulty of the book, you may also like " + books["bibliography.title"][closest_index] +  " by " + books["bibliography.author.name"][closest_index] + " with the smallest statistical difference of " + str(smallest_diff) + "\n")
+         print("Based on the readability and difficulty of the book, you may also like " + books["bibliography.title"][closest_index] +  " by " + books["bibliography.author.name"][closest_index] + " with the smallest statistical difference of " + str(smallest_diff) + "\n_________________________________________")
          return books["bibliography.title"][closest_index] +  " by " + books["bibliography.author.name"][closest_index]
               
               
@@ -195,7 +196,7 @@ def book_librarian(book_name):
 
      prompt = "You are knowledgable in books and literature. I really enjoyed the book " + book_name + " tell me, in 3 separate paragraphs for each book, why I would also like " + str(book1) + ", " + str(book2) + ", and " + str(book3)
      response = client.chat.completions.create(model="gpt-3.5-turbo-0125", messages=[{"role": "user", "content": prompt}] )
-     return "Here are 3 more books that you may also enjoy:\n" + response.choices[0].message.content
+     return "Here are 3 more books that you may also enjoy:\n\n" + response.choices[0].message.content
 
 
 
@@ -204,7 +205,7 @@ def open_shop():
      book = input("What is the title of a book that you enjoyed? ")
      print("\n Calculating your results...\n")
      print("\n\n" + book_librarian(book))
-     print("\n You can scroll up to see the method I used to find each of these books for you!\n")
+     print("\nYou can scroll up to see the methods used to find each of these books!\n")
 
 
 open_shop()
