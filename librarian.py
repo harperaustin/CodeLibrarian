@@ -12,7 +12,7 @@ import random
 nlp = spacy.load("en_core_web_md")
 books = pd.read_csv('classics.csv')
 
-#YOUR OPENAI API KEY HERE!!!!!!! 
+#OPENAI API KEY HERE!!!!!!! 
 ############################################
 client = OpenAI(api_key="YOUR-KEY-HERE!!!!")
 ############################################
@@ -113,8 +113,8 @@ def get_book_url(book_title):
     """
      search_url = "https://www.goodreads.com/search?q=" + book_title.replace(' ', '+')
 
-     ### YOUR USER AGENT HERE!!!! ###########################################################
-     response = requests.get(search_url, headers={"User-Agent": "YOUR USER AGENT HERE!!!!!"})
+     ### USER AGENT HERE!!!! ################################################################
+     response = requests.get(search_url, headers={"User-Agent": "USER-AGENT HERE!!!!!"})
      ########################################################################################
 
      if response.status_code != 200:
