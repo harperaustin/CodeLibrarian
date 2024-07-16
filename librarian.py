@@ -12,8 +12,10 @@ import random
 nlp = spacy.load("en_core_web_md")
 books = pd.read_csv('classics.csv')
 
-
-client = OpenAI(api_key="sk-proj-BFrLkgviRC9MMaH0wIW9T3BlbkFJKqBhEvCpPHWX8pjFnADr")
+#YOUR OPENAI API KEY HERE!!!!!!! 
+############################################
+client = OpenAI(api_key="YOUR-KEY-HERE!!!!")
+############################################
 
 
 
@@ -110,7 +112,10 @@ def get_book_url(book_title):
     The URL of the book.
     """
      search_url = "https://www.goodreads.com/search?q=" + book_title.replace(' ', '+')
-     response = requests.get(search_url, headers={"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"})
+
+     ### YOUR USER AGENT HERE!!!! ###########################################################
+     response = requests.get(search_url, headers={"User-Agent": "YOUR USER AGENT HERE!!!!!"})
+     ########################################################################################
 
      if response.status_code != 200:
           print("Failed to retrieve book search results.")
