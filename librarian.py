@@ -2,6 +2,7 @@ import pandas as pd
 import spacy
 import requests
 from bs4 import BeautifulSoup
+import selenium
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
@@ -9,6 +10,7 @@ import time
 import openai
 from openai import OpenAI
 import random
+
 
 nlp = spacy.load("en_core_web_md")
 books = pd.read_csv('classics.csv')
@@ -31,9 +33,8 @@ def compare_two_books(book1desc, book2desc):
     and the number of total words in the descriptions.
     """
     book1 = set(str(book1desc).lower().replace("-","").replace("fiction","").replace(",","").replace("genre", "").replace(";", "").replace(":", "").replace(")", "").replace("(", "").split())
-    #print("\n Book 1: " + str(book1) + "\n")
     book2 = set(str(book2desc).lower().replace("-","").replace("fiction","").replace(",","").replace("genre", "").replace(";", "").replace(":", "").replace(")", "").replace("(", "").split())
-    #print("\n Book 2: " + str(book2) + "\n")
+
     total = 0
     count = 0
     for desc1 in book1:
@@ -47,7 +48,7 @@ def compare_two_books(book1desc, book2desc):
                              count += 1
                         total += val
     return count
-    #return (count / ((len(book1) + len(book2))/2))
+
 
 
     
@@ -67,10 +68,8 @@ def find_most_similar_book(book_title):
          print("Book not in stored dataset, but you can provide 3 keywords and we'll find a similar book!")
          book_descr += str(input("First Keyword: ") + ", ")
          book_descr += str(input("Second Keyword: ") + ", ")
-         book_descr += str(input("Third Keyword: ") + ", ")
+         book_descr += str(input("Third Keyword: "))
          print(book_descr)
-        # here i can add it to where you add in your own descriptions.
-    #Need to make sure the book doesn't just find itself in case of repeats
          
     most_sim_val = 0
     most_sim_index = 0
@@ -84,14 +83,14 @@ def find_most_similar_book(book_title):
                    most_sim_index = index
      
     if most_sim_val == 0:
-         print("The descriptions of the book had absolutely 0 similarities with the content of other books in the dataset. Make sure your spelling is correct.")
+         print("The descriptions of the book had absolutely 0 similarities with the content of other books in the dataset. Make sure your spelling is correct.\n")
          return None
     
     average = total / 1005
-    print("The most similar book from the classics dataset is " + books["bibliography.title"][most_sim_index]+ " by "+ books["bibliography.author.name"][most_sim_index] + " with a similarity score of " + str(most_sim_val) + ". The average similarity score was " + str(average))
+    print("The most similar book from the classics dataset, based on NLP content similarities, is " + books["bibliography.title"][most_sim_index]+ " by "+ books["bibliography.author.name"][most_sim_index] + " with a similarity score of " + str(most_sim_val) + ". The average similarity score was " + str(average) + "\n")
     return books["bibliography.title"][most_sim_index]+ " by "+ books["bibliography.author.name"][most_sim_index]
 
-#print(find_most_similar_book("The Call of the Wild"))
+
 
 def get_book_url(book_title):
      search_url = "https://www.goodreads.com/search?q=" + book_title.replace(' ', '+')
@@ -131,42 +130,29 @@ def get_also_enjoyed_book(book_url):
 
 
      if not other_readers_section:
-          print("The other readers enjoyed section was NOT found.")
+          #print("The other readers enjoyed section was NOT found.")
           return None
      else:
-          print("Other readers enjoyed section found.")
+         # print("Other readers enjoyed section found.")
           driver.execute_script("arguments[0].scrollIntoView(true);", other_readers_section_scroll)
           time.sleep(4)
      
      first_rec = other_readers_section.find_element(By.CLASS_NAME, "BookCard")
-     #first_rec = other_readers_section.find('div', class_="BookCard")
+     
      if not first_rec:
-          print("No Recs found")
           return None
-     else:
-          print("Found some recs")
           
-
      first_rec_title = first_rec.find_element(By.CLASS_NAME,"BookCard__title")
      first_rec_author = first_rec.find_element(By.CLASS_NAME,"BookCard__authorName")
    
-
-     
-     
      rec_book_title = first_rec_title.text
      rec_book_author = first_rec_author.text
-     print(rec_book_title + " by " + rec_book_author)
+     print("After scraping the web, I've found that users that enjoyed your book ALSO enjoyed " + rec_book_title + " by " + rec_book_author + "\n")
      driver.quit()
      return rec_book_title + " by " + rec_book_author
 
-#print(get_also_enjoyed_book(get_book_url("Ego is the Enemy")))
-
 
 def get_stat_diff(book_title):
-     #use "metrics.difficulty.automated readability index" and "metrics.difficulty.linsear write formula"
-
-
-     #first I need to find the index of the book. I alrady use this exact thing, so I can save redundant code somehow.
     have_book = False
     book_read = 0
     book_lins = 0
@@ -181,9 +167,8 @@ def get_stat_diff(book_title):
     closest_index = 0
     if not have_book:
           print("Book not in dataset, so a book with similar stats can't be calculated. A random book will be generated instead: ")
-          #DO A RANDOM BOOK INSTEAD!!!!
           new_index = random.randint(0,1005)
-          print("The random book is " + books["bibliography.title"][new_index] +  " by " + books["bibliography.author.name"][new_index])
+          print("The random book is " + books["bibliography.title"][new_index] +  " by " + books["bibliography.author.name"][new_index] + "\n")
           return books["bibliography.title"][new_index] +  " by " + books["bibliography.author.name"][new_index]
 
     else:
@@ -192,7 +177,7 @@ def get_stat_diff(book_title):
               if curr_diff < smallest_diff and curr_diff != 0:
                    closest_index = index
                    smallest_diff = curr_diff
-         print(books["bibliography.title"][closest_index] +  " by " + books["bibliography.author.name"][closest_index] + " with the smallest statistical difference of " + str(smallest_diff))
+         print("Based on the readability and difficulty of the book, you may also like " + books["bibliography.title"][closest_index] +  " by " + books["bibliography.author.name"][closest_index] + " with the smallest statistical difference of " + str(smallest_diff) + "\n")
          return books["bibliography.title"][closest_index] +  " by " + books["bibliography.author.name"][closest_index]
               
               
@@ -200,6 +185,7 @@ def get_stat_diff(book_title):
 
 
 def book_librarian(book_name):
+     global results
      book1 = find_most_similar_book(book_name)
      book2 = get_also_enjoyed_book(get_book_url(book_name))
      book3 = get_stat_diff(book_name)
@@ -209,8 +195,19 @@ def book_librarian(book_name):
 
      prompt = "You are knowledgable in books and literature. I really enjoyed the book " + book_name + " tell me, in 3 separate paragraphs for each book, why I would also like " + str(book1) + ", " + str(book2) + ", and " + str(book3)
      response = client.chat.completions.create(model="gpt-3.5-turbo-0125", messages=[{"role": "user", "content": prompt}] )
+     return "Here are 3 more books that you may also enjoy:\n" + response.choices[0].message.content
 
-     return response.choices[0].message.content
 
 
-print("\n\n\n" + book_librarian("Just Kids") + "\n")
+def open_shop():
+     print("\nWelcome to the Code Librarian, where you can find your next favorite book!\n")
+     book = input("What is the title of a book that you enjoyed? ")
+     print("\n Calculating your results...\n")
+     print("\n\n" + book_librarian(book))
+     print("\n You can scroll up to see the method I used to find each of these books for you!\n")
+
+
+open_shop()
+
+
+
