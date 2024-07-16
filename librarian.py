@@ -2,12 +2,9 @@ import pandas as pd
 import spacy
 import requests
 from bs4 import BeautifulSoup
-import selenium
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.action_chains import ActionChains
 import time
-import openai
 from openai import OpenAI
 import random
 
@@ -15,8 +12,8 @@ import random
 nlp = spacy.load("en_core_web_md")
 books = pd.read_csv('classics.csv')
 
-openai.api_key = "sk-proj-eFxvJzr1GxiHXK3ZJTagT3BlbkFJOnZDF2hFc11ME7B9AgDF"
-client = OpenAI(api_key="sk-proj-eFxvJzr1GxiHXK3ZJTagT3BlbkFJOnZDF2hFc11ME7B9AgDF")
+
+client = OpenAI(api_key="sk-proj-BFrLkgviRC9MMaH0wIW9T3BlbkFJKqBhEvCpPHWX8pjFnADr")
 
 
 
@@ -57,6 +54,15 @@ def compare_two_books(book1desc, book2desc):
 
 
 def find_most_similar_book(book_title):
+    """
+    This function finds the book in the data set with the highest similarity score with the inputted book.
+
+    Parameters:
+    book_title: the title of a book
+
+    Returns:
+    The title and the author of the book with the highest similarity score.
+    """
     have_book = False
     book_descr = ""
     for index, bk_title in enumerate(books["bibliography.title"]):
@@ -94,6 +100,15 @@ def find_most_similar_book(book_title):
 
 
 def get_book_url(book_title):
+     """
+    This function finds the url of a book on GoodReads.
+
+    Parameters:
+    book_title: the title of a book
+
+    Returns:
+    The URL of the book.
+    """
      search_url = "https://www.goodreads.com/search?q=" + book_title.replace(' ', '+')
      response = requests.get(search_url, headers={"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"})
 
@@ -115,6 +130,15 @@ def get_book_url(book_title):
 
 
 def get_also_enjoyed_book(book_url):
+     """
+    This function finds a book that other readers enjoyed alongside the book in the given URL.
+
+    Parameters:
+    book_URL: A URL to the desired book on GoodReads
+
+    Returns:
+    The title and the author of the book that other readers enjoyed.
+    """
      if type(book_url) != str:
           print("Invalid URL due to spelling, no book can be found.")
           return None
@@ -131,10 +155,8 @@ def get_also_enjoyed_book(book_url):
 
 
      if not other_readers_section:
-          #print("The other readers enjoyed section was NOT found.")
           return None
      else:
-         # print("Other readers enjoyed section found.")
           driver.execute_script("arguments[0].scrollIntoView(true);", other_readers_section_scroll)
           time.sleep(4)
      
@@ -154,6 +176,16 @@ def get_also_enjoyed_book(book_url):
 
 
 def get_stat_diff(book_title):
+    """
+    This function finds the book in the data set with the lowest combined statistical difference in the 
+    automated readability index and linsear write formula.
+
+    Parameters:
+    book_title: the title of a book
+
+    Returns:
+    The title and the author of the book with the lowest statisical difference score.
+    """
     have_book = False
     book_read = 0
     book_lins = 0
@@ -186,7 +218,16 @@ def get_stat_diff(book_title):
 
 
 def book_librarian(book_name):
-     global results
+     """
+    This function runs all 3 different book finding methods and outputs a detailed response
+    detailing connections and similarities between the books.
+
+    Parameters:
+    book_name: the title of a book
+
+    Returns:
+    A paragraph suggesting and connecting books.
+    """
      book1 = find_most_similar_book(book_name)
      book2 = get_also_enjoyed_book(get_book_url(book_name))
      book3 = get_stat_diff(book_name)
@@ -201,6 +242,9 @@ def book_librarian(book_name):
 
 
 def open_shop():
+     """
+    This function sets up the Code Librarian and user input to run this program.
+    """
      print("\nWelcome to the Code Librarian, where you can find your next favorite book!\n")
      book = input("What is the title of a book that you enjoyed? ")
      print("\n Calculating your results...\n")
