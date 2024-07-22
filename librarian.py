@@ -20,6 +20,7 @@ client = OpenAI(api_key="YOUR-KEY-HERE!!!!")
 
 
 
+
 def compare_two_books(book1desc, book2desc):
     """
     This function finds the similarity score between two books based on their description.
